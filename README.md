@@ -5,7 +5,7 @@ Using Hadoop playbook you can deploy Hadoop cluster with Namenode, SecondaryName
 HBase playbook supports deployment with master, backup masters and regionservers.  
 
 Playbooks designed for:  
-Ansible version: 2.3.0
+Ansible version: 2.3.0  
 Hadoop version: 2.6.0  
 Hbase version: 1.3.0  
 

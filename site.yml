@@ -1,0 +1,4 @@
+---
+# Deploy Hadoop and HBase playbooks
+- include: delpoy-hadoop.yml
+- include: deploy-hbase.yml

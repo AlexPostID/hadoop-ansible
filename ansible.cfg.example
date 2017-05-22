@@ -1,0 +1,7 @@
+[defaults]
+inventory = ./inventory
+host_key_checking = False
+timeout = 10
+remote_user = root
+private_key_file = ~/.ssh/id.rsa
+nocows = 1

@@ -1,0 +1,30 @@
+- hosts: hadoop_namenode
+  become: yes
+  vars_files:
+    - ./vars/env.yml
+  tasks:
+    - name: Upload test file to node
+      copy:
+        src: "{{hdfs_test_file}}"
+        dest: "{{hadoop_home}}"
+        owner: "{{hadoop_user}}"
+        group: "{{hadoop_group}}"
+
+    - name: Create directory for test file in HDFS
+      become_user: "{{hadoop_user}}"
+      shell: "{{hadoop_home}}/bin/hdfs dfs -mkdir /test_dir"
+      ignore_errors: True
+
+    - name: Upload test file to to HDFS
+      become_user: "{{hadoop_user}}"
+      shell: "{{hadoop_home}}/bin/hdfs dfs -put {{hadoop_home}}/{{hdfs_test_file}} /test_dir"
+      ignore_errors: True
+
+    - name: List directory in HDFS
+      become_user: "{{hadoop_user}}"
+      shell: "{{hadoop_home}}/bin/hdfs dfs -ls /test_dir"
+      ignore_errors: True
+      register: result
+
+    - debug:
+        var: result

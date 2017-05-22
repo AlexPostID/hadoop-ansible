@@ -1,0 +1,80 @@
+---
+- name: Create hadoop installation directory
+  file:
+     path: "{{ hadoop_installation_path }}"
+     state: directory
+
+- name: Download hadoop distributive
+  get_url:
+    url: "{{ hadoop_download_url }}"
+    dest: "{{ hadoop_installation_path }}/hadoop-{{ hadoop_version }}.tar.gz"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    force: false
+  environment: "{{proxy_env}}"
+  register: result
+  until: result|success
+  retries: 7
+  delay: 3
+
+- name: Unarchive hadoop distributive
+  unarchive:
+    src: "{{ hadoop_installation_path }}/hadoop-{{ hadoop_version }}.tar.gz"
+    dest: "{{ hadoop_installation_path }}"
+    creates: "{{ hadoop_installation_path }}/hadoop-{{ hadoop_version }}"
+    copy: false
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+
+- name: Create link for hadoop unified directory
+  file:
+    dest: "{{ hadoop_installation_path }}/hadoop"
+    src: "{{ hadoop_installation_path }}/hadoop-{{ hadoop_version }}"
+    state: link
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+
+- name: Create hadoop log directory
+  file:
+    path: "{{hadoop_log_directory}}"
+    state: directory
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+
+- name: Setup hadoop systemd script for Namenodes
+  template:
+    src: "{{item}}"
+    dest: "/etc/systemd/system/"
+    owner: root
+    group: root
+    mode: 0700
+  when: hadoop_is_namenode is defined and  hadoop_is_namenode == "true"
+  with_items:
+    - yarn-resourcemanager.service
+    - hadoop-dfs.service
+
+- name: Setup hadoop systemd script for secondarynamenode
+  template:
+    src: "{{item}}"
+    dest: "/etc/systemd/system/"
+    owner: root
+    group: root
+    mode: 0700
+  when: hadoop_is_secondarynamenode is defined and hadoop_is_secondarynamenode == "true"
+  with_items:
+    - hadoop-secondarynamenode.service
+
+- name: Setup hadoop systemd script for datanodes
+  template:
+    src: "{{item}}"
+    dest: "/etc/systemd/system/"
+    owner: root
+    group: root
+    mode: 0700
+  when: hadoop_is_datanode is defined and hadoop_is_datanode == "true"
+  with_items:
+    - hadoop-datanode.service
+    - yarn-nodemanager.service
+
+- name: Reload systemctl daemon
+  command: systemctl daemon-reload

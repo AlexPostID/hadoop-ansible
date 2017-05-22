@@ -1,0 +1,57 @@
+---
+# Proxy configuration
+proxy_env:
+  http_proxy: ""
+  htts_proxy: ""
+
+# If set to true, an entry for `ansible_hostname`, bound to the host's default IPv4 address is added added.
+hosts_add_default_ipv4: true
+
+# If set to true, basic IPv6 entries (localhost6, ip6-localnet, etc) are added.
+hosts_add_basic_ipv6: false
+
+# If set to true, an entry for every host managed by Ansible is added. Remark that this makes `hosts_add_default_ipv4` unnecessary, as it will be added as wel by this setting.
+hosts_add_ansible_managed_hosts: true
+
+# Custom hosts entries to be added
+hosts_entries: []
+
+# Custom host file snippets to be added
+hosts_file_snippets: []
+
+# IP protocol to use
+hosts_ip_protocol: 'ipv4'
+
+# Network interface to use
+hosts_network_interface: "{{ ansible_default_ipv4.interface }}"
+hosts_ansible_network_interface: "ansible_{{ hosts_network_interface }}"
+
+# Location of the hosts file
+hosts_file: /etc/hosts
+
+# NTP defaults
+ntp_pkg_state: 'installed'
+ntp_service_state: 'started'
+ntp_service_enabled: 'yes'
+ntp_config_server: [ '0.pool.ntp.org', '1.pool.ntp.org', '2.pool.ntp.org', '3.pool.ntp.org' ]
+ntp_config_restrict:
+- '-4 default kod notrap nomodify nopeer noquery'
+- '-6 default kod notrap nomodify nopeer noquery'
+- '127.0.0.1'
+- '::1'
+ntp_config_listen: []
+ntp_config_filegen:
+- 'loopstats file loopstats type day enable'
+- 'peerstats file peerstats type day enable'
+- 'clockstats file clockstats type day enable'
+ntp_config_statistics: 'loopstats peerstats clockstats'
+ntp_config_crypto: ''
+ntp_config_includefile: ''
+ntp_config_keys: ''
+ntp_config_trustedkey: ''
+ntp_config_requestkey: ''
+ntp_config_controlkey: ''
+ntp_config_broadcast: ''
+ntp_config_broadcastclient: ''
+ntp_config_multicastclient: ''
+ntp_config_tinker_panic_enabled: ''

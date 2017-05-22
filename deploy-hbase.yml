@@ -1,0 +1,24 @@
+---
+# Deploy common tasks for all nodes in inventory file
+- hosts: all
+  vars_files:
+    - vars/env.yml
+  become: true
+  roles:
+    - common
+
+# Deploy HBase RegionServers
+- hosts: hbase_regionservers
+  vars_files:
+    - vars/env.yml
+  become: true
+  roles:
+    - {role: hbase, hbase_is_master: 'false'}
+
+# Deploy HBase Master
+- hosts: hbase_master
+  vars_files:
+    - vars/env.yml
+  become: true
+  roles:
+    - {role: hbase, hbase_is_master: 'true'}

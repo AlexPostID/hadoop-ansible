@@ -1,0 +1,32 @@
+---
+# Deploy common tasks for all nodes in inventory file
+- hosts: all
+  vars_files:
+    - vars/env.yml
+  become: true
+  roles:
+    - common
+
+# Deploy Hadoop NameNode
+- hosts: hadoop_namenode
+  vars_files:
+    - vars/env.yml
+  become: true
+  roles:
+    - {role: hadoop, hadoop_is_namenode: 'true'}
+
+# Deploy Hadoop Secondary NameNode
+- hosts: hadoop_secondarynamenode
+  vars_files:
+    - vars/env.yml
+  become: true
+  roles:
+    - {role: hadoop, hadoop_is_secondarynamenode: 'true'}
+
+# Deploy Hadoop DataNodes
+- hosts: hadoop_datanodes
+  vars_files:
+    - vars/env.yml
+  become: true
+  roles:
+    - {role: hadoop, hadoop_is_datanode: 'true'}

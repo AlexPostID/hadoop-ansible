@@ -1,0 +1,62 @@
+---
+- name: Open access to ports in firewall
+  iptables:
+    chain: INPUT
+    jump: ACCEPT
+    protocol: tcp
+    destination_port: "{{item}}"
+  ignore_errors: yes
+  with_items:
+  - "{{ hbase_ports_to_open }}"
+
+- stat:
+    path: "{{ JAVA_HOME }}/bin/java"
+  register: java_path
+
+- name: Fail if no Java found in JAVA_HOME
+  fail: msg="Java instalation not found"
+  when: java_path.stat is undefined or
+       (java_path.stat is defined and java_path.stat.exists != true)
+
+- name: Set JAVA_HOME in hbase-env.sh file
+  lineinfile:
+    dest: "{{hbase_home}}/conf/hbase-env.sh"
+    regexp: "JAVA_HOME="
+    line: "export JAVA_HOME={{item}}"
+  with_items:
+    - "{{ JAVA_HOME }}"
+
+- name: init /etc/profile
+  lineinfile:
+    dest: /etc/profile
+    state: present
+    line: "{{item}}"
+  with_items:
+    - "JAVA_HOME={{JAVA_HOME}}"
+    - "HBASE_HOME={{hbase_home}}"
+    - "HBASE_CLASSPATH={{hbase_home}}/conf"
+
+- name: Add hbase configs
+  template:
+    src: "{{item}}"
+    dest: "{{hbase_home}}/conf/"
+    owner: "{{ hbase_user }}"
+    group: "{{ hbase_group }}"
+    force: true
+  with_items:
+    - regionservers
+    - backup-masters
+    - hbase-site.xml
+  notify:
+    - restart Hbase
+
+- name: Enable HBase service
+  systemd:
+    name: hbase
+    enabled: yes
+    state: started
+  when: hbase_is_master is defined and hbase_is_master == "true"
+
+- name: Reload systemctl daemon
+  command: systemctl daemon-reload
+  when: hbase_is_master is defined and hbase_is_master == "true"

@@ -1,0 +1,100 @@
+---
+- stat:
+    path: "{{ JAVA_HOME }}/bin/java"
+  register: java_path
+
+- name: Fail if no Java found
+  fail: msg="Java instalation not found"
+  when: java_path.stat is undefined or
+       (java_path.stat is defined and java_path.stat.exists != true)
+
+- name: Set JAVA_HOME in hadoop-env.sh file
+  lineinfile:
+    dest: "{{ hadoop_installation_path }}/hadoop/etc/hadoop/hadoop-env.sh"
+    regexp: "JAVA_HOME="
+    line: "export JAVA_HOME={{item}}"
+  with_items:
+    - "{{ JAVA_HOME }}"
+
+- name: Open access to ports in firewall
+  iptables:
+    chain: INPUT
+    jump: ACCEPT
+    protocol: tcp
+    destination_port: "{{item}}"
+  ignore_errors: yes
+  with_items:
+    - "{{ hadoop_ports_to_open }}"
+
+- name: Configure hadoop config files
+  template:
+    src: "{{item}}"
+    dest: "{{ hadoop_home }}/etc/hadoop/{{item}}"
+    owner: "{{hadoop_user}}"
+    group: "{{hadoop_group}}"
+  with_items:
+    - yarn-site.xml
+    - hdfs-site.xml
+    - core-site.xml
+    - mapred-site.xml
+  notify:
+   - restart hadoop-dfs
+   - restart yarn-resourcemanager
+   - restart hadoop-datanode
+   - restart yarn-nodemanager
+   - restart hadoop-secondarynamenode
+
+- name: Update slaves config
+  template:
+    src: slaves
+    dest: "{{ hadoop_home }}/etc/hadoop/slaves"
+    owner: "{{hadoop_user}}"
+    group: "{{hadoop_group}}"
+  notify:
+   - refresh dfs-nodes
+   - refresh yarn-nodes
+   - restart hadoop-datanode
+   - restart yarn-nodemanager
+
+- stat:
+    path: "{{ hadoop_home }}/name/"
+  register: namenode_format
+
+- name: Format the namenode
+  become_user: "{{hadoop_user}}"
+  command: "{{ hadoop_home }}/bin/hdfs namenode -format"
+  args:
+    creates: "/tmp/hadoop-root/dfs/name"
+  when: hadoop_is_namenode == "true" and namenode_format.stat.exists == False
+
+- name: Enable namenode services
+  systemd:
+    name: "{{item}}"
+    enabled: yes
+    state: started
+  when: hadoop_is_namenode is defined and  hadoop_is_namenode == "true"
+  with_items:
+    - hadoop-dfs
+    - yarn-resourcemanager
+
+- name: Enable secondarynamenode services
+  systemd:
+    name: "{{item}}"
+    enabled: yes
+    state: started
+  when: hadoop_is_secondarynamenode is defined and hadoop_is_secondarynamenode == "true"
+  with_items:
+    - hadoop-secondarynamenode
+
+- name: Enable datanodes services
+  systemd:
+    name: "{{item}}"
+    enabled: yes
+    state: started
+  when: hadoop_is_datanode is defined and hadoop_is_datanode == "true"
+  with_items:
+    - hadoop-datanode
+    - yarn-nodemanager
+
+- name: Reload systemctl daemon
+  command: systemctl daemon-reload

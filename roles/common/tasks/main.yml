@@ -1,0 +1,55 @@
+---
+# Pakages for RedHat family OS
+- name: "Yum install common pakages"
+  yum: "pkg={{ item }} state=installed"
+  environment: "{{proxy_env}}"
+  when: ansible_os_family == 'RedHat'
+  with_items:
+    - dstat
+    - nc
+
+# Pakages for Debian family OS
+- name: "Apt install common pakages"
+  apt: "pkg={{ item }} state=installed update_cache=yes"
+  environment: "{{proxy_env}}"
+  when: ansible_os_family == 'Debian'
+  with_items:
+    - dstat
+    - nc
+
+- name: Install custom hosts file
+  template:
+    src: etc_hosts.j2
+    dest: "{{ hosts_file }}"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: strict host key checking no
+  lineinfile:
+    dest: "/etc/ssh/ssh_config"
+    regexp: "StrictHostKeyChecking"
+    line: "StrictHostKeyChecking no"
+  notify:
+    restart sshd
+
+- name: Add the OS specific variables
+  include_vars: '{{ ansible_os_family }}.yml'
+
+- name: Install the required packages in Redhat derivatives
+  yum: name=ntp state={{ ntp_pkg_state }}
+  environment: "{{proxy_env}}"
+  when: ansible_os_family == 'RedHat'
+
+- name: Install the required packages in Debian derivatives
+  apt: name=ntp state={{ ntp_pkg_state }} update_cache=yes cache_valid_time=86400
+  environment: "{{proxy_env}}"
+  when: ansible_os_family == 'Debian'
+
+- name: Copy the ntp.conf template file
+  template: src=ntp.conf.j2 dest=/etc/ntp.conf
+  notify:
+  - restart ntp
+
+- name: Start/stop ntp service
+  service: name={{ ntp_service_name }} state={{ ntp_service_state }} enabled={{ ntp_service_enabled }}

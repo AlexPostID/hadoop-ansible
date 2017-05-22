@@ -1,0 +1,93 @@
+---
+# Proxy configuration
+proxy_env:
+  http_proxy: ""
+  htts_proxy: ""
+
+# Default Java home
+JAVA_HOME: "/usr"
+
+# Hadoop user and group
+hadoop_user: hadoop
+hadoop_group: hadoop
+
+hadoop_ssh_private_key: "~/.ssh/id_rsa"
+hadoop_ssh_authorized_keys: "~/.ssh/authorized_keys"
+
+# Hadoop directories
+hadoop_installation_path: "/opt"
+hadoop_home: "{{ hadoop_installation_path }}/hadoop"
+hadoop_log_directory: "{{hadoop_home}}/log"
+
+# Hadoop full varsion
+hadoop_version: 2.6.1
+
+# Default node role
+hadoop_is_namenode: false
+hadoop_is_datanode: true
+
+# Namenode and port definition
+hadoop_namenode_port: 9000
+hadoop_namenode: "{{ hostvars[groups['hadoop_namenode'][0]]['ansible_fqdn'] | mandatory }}"
+
+# Secondary namenode definition
+hadoop_secondarynamenode_port: 50091
+hadoop_secondarynamenode: "{{ hostvars[groups['hadoop_secondarynamenode'][0]]['ansible_fqdn'] | default(hadoop_namenode) }}"
+
+
+# Config properties
+core_properties:
+  fs.defaultFS: hdfs://{{hadoop_namenode}}:{{hadoop_namenode_port}}
+  io.file.buffer.size: 131072
+  hadoop.tmp.dir: "file://{{hadoop_home}}/tmp"
+
+hdfs_properties:
+  dfs.namenode.secondary.http-address: "{{hadoop_secondarynamenode}}:{{hadoop_secondarynamenode_port}}"
+  dfs.namenode.name.dir: "file://{{hadoop_home}}/name"
+  dfs.support.append: true
+  dfs.datanode.data.dir: "file://{{hadoop_home}}/data"
+  dfs.replication: 2
+  dfs.webhdfs.enabled: true
+  dfs.permissions: false
+
+mapred_properties:
+  mapreduce.framework.name: yarn
+  mapreduce.jobhistory.address: "{{hadoop_namenode}}:10020"
+  mapreduce.jobhistory.webapp.address: "{{hadoop_namenode}}:19888"
+
+yarn_properties:
+  yarn.nodemanager.aux-services: mapreduce_shuffle
+  yarn.nodemanager.aux-services.mapreduce.shuffle.class: org.apache.hadoop.mapred.ShuffleHandler
+  yarn.resourcemanager.address: "{{hadoop_namenode}}:8032"
+  yarn.resourcemanager.scheduler.address: "{{hadoop_namenode}}:8030"
+  yarn.resourcemanager.resource-tracker.address: "{{hadoop_namenode}}:8031"
+  yarn.resourcemanager.admin.address: "{{hadoop_namenode}}:8033"
+  yarn.resourcemanager.webapp.address: "{{hadoop_namenode}}:8088"
+  yarn.resourcemanager.hostname: "{{hadoop_namenode}}"
+
+# Link properties to download hadoop distributive
+hadoop_mirrors: [ "http://apache-mirror.rbc.ru/pub/apache/hadoop/core/", "http://www-eu.apache.org/dist/hadoop/core/"]
+hadoop_tar_name: "hadoop-{{ hadoop_version }}.tar.gz"
+hadoop_download_url: "{{ hadoop_mirrors|random }}/hadoop-{{ hadoop_version }}/{{ hadoop_tar_name }}"
+
+# Ports that should be opened in iptables
+hadoop_ports_to_open:
+  - 8020
+  - 8030
+  - 8031
+  - 8032
+  - 8033
+  - 8040
+  - 8088
+  - 50010
+  - 50020
+  - 50030
+  - 50070
+  - 50075
+  - 50475
+  - 50090
+  - 50091
+  - 9000
+  - 9001
+  - 19888
+  - 10020

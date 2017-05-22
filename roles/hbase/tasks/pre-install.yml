@@ -1,0 +1,52 @@
+---
+- name: Create hbase group
+  group:
+    name: "{{hbase_group}}"
+    system: yes
+
+- name: Create hbase user
+  user:
+    name: "{{hbase_user}}"
+    group: "{{hbase_group}}"
+    system: yes
+
+- name: Create .ssh folder
+  file:
+    path: "/home/{{hbase_user}}/.ssh"
+    state: directory
+    mode: 0700
+    owner: "{{ hbase_user }}"
+    group: "{{ hbase_group }}"
+
+- name: Copy ssh key
+  copy:
+    src: "{{item}}"
+    dest: "/home/{{hbase_user}}/.ssh"
+    owner: "{{ hbase_user }}"
+    group: "{{ hbase_group }}"
+    mode: 0600
+  with_items:
+    - "{{ hbase_ssh_private_key }}"
+    - "{{ hbase_ssh_authorized_keys }}"
+
+# Pakages for RedHat family OS
+- name: Yum install prerequisites
+  yum: pkg={{ item }} state=installed
+  environment: "{{proxy_env}}"
+  when: ansible_os_family == 'RedHat'
+  with_items:
+    - wget
+    - gzip
+    - tar
+    - java-1.7.0-openjdk
+
+# Pakages for Debian family OS
+- name: Apt install prerequisites
+  apt: pkg={{ item }} state=installed update_cache=yes
+  environment: "{{proxy_env}}"
+  when: ansible_os_family == 'Debian'
+  with_items:
+    - wget
+    - gzip
+    - tar
+    - default-jre-headless

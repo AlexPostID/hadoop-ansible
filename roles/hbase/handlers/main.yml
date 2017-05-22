@@ -1,0 +1,4 @@
+---
+- name: restart Hbase
+  service: name=hbase state=restarted
+  when: hbase_is_master is defined and hbase_is_master == "true"

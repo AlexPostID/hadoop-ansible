@@ -1,0 +1,85 @@
+---
+- name: Create hadoop installation directory
+  file:
+     path: "{{ hbase_installation_path }}"
+     state: directory
+
+- name: "Download Hbase"
+  get_url:
+    url: "{{hbase_download_url}}"
+    dest: "{{ hbase_installation_path }}/{{hbase_tar_name}}"
+    owner: "{{ hbase_user }}"
+    group: "{{ hbase_group }}"
+    force: false
+  register: result
+  environment: "{{proxy_env}}"
+  until: result|success
+  retries: 7
+  delay: 3
+
+- name: "Unarchive hbase distributive"
+  unarchive:
+    src: "{{ hbase_installation_path }}/{{hbase_tar_name}}"
+    dest: "{{hbase_installation_path}}"
+    creates: "{{hbase_installation_path}}/hbase-{{hbase_version}}"
+    copy: false
+    owner: "{{ hbase_user }}"
+    group: "{{ hbase_group }}"
+
+- name: Force to chown direcrory
+  file:
+    path: "{{hbase_installation_path}}/hbase-{{hbase_version}}"
+    state: directory
+    owner: "{{ hbase_user }}"
+    group: "{{ hbase_group }}"
+    recurse: true
+
+- name: Create link to universal hbase directory
+  file:
+    dest: "{{hbase_home}}"
+    src: "{{hbase_installation_path}}/hbase-{{hbase_version}}"
+    state: link
+    owner: "{{ hbase_user }}"
+    group: "{{ hbase_group }}"
+
+- name: Create hbase log directory
+  file:
+    path: "{{hbase_log_directory}}"
+    state: directory
+    owner: "{{ hbase_user }}"
+    group: "{{ hbase_group }}"
+    recurse: true
+
+- name: "Create hbase temp directory"
+  file:
+    path: "{{hbase_tmp_dir}}"
+    mode: 0775
+    owner: "{{hbase_user}}"
+    group: "{{hbase_group}}"
+    state: directory
+    recurse: true
+
+- name: "Create hbase local_storage"
+  file:
+    path: "{{item}}"
+    mode: 0775
+    owner: "{{hbase_user}}"
+    group: "{{hbase_group}}"
+    state: directory
+    recurse: true
+  with_items:
+    - "{{hbase_local_dir}}"
+    - "{{hbase_local_dir}}/jars"
+
+- name: Setup hbase systemd script
+  template:
+    src: hbase.service
+    dest: "/etc/systemd/system/"
+    owner: root
+    group: root
+    mode: 0700
+  when: hbase_is_master is defined and hbase_is_master == "true"
+
+- name: Reload systemctl daemon
+  command: systemctl daemon-reload
+  when: hbase_is_master is defined and hbase_is_master == "true"

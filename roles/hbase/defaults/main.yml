@@ -1,0 +1,55 @@
+---
+# Proxy configuration
+proxy_env:
+  http_proxy: ""
+  htts_proxy: ""
+
+# Default Java home
+JAVA_HOME: "/usr"
+
+# Hadoop namenode adress and port definition
+hadoop_namenode_port: 9000
+hadoop_namenode: "{{ hostvars[groups['hadoop_namenode'][0]]['ansible_fqdn'] | mandatory }}"
+
+# Hbase instalation default values
+hbase_version: 1.3.0
+hbase_tar_name: "hbase-{{hbase_version}}-bin.tar.gz"
+hbase_download_url: "http://www-eu.apache.org/dist/hbase/{{hbase_version}}/{{hbase_tar_name}}"
+hbase_user: hbase
+hbase_group: hbase
+hbase_installation_path: "/opt"
+hbase_home: "{{hbase_installation_path}}/hbase"
+hbase_log_directory: "{{hbase_home}}/log"
+hbase_tmp_dir: "{{hbase_home}}/tmp"
+hbase_local_dir: "{{hbase_home}}/local_storage"
+hbase_ssh_private_key: "~/.ssh/id_rsa"
+hbase_ssh_authorized_keys: "~/.ssh/authorized_keys"
+
+# Hbase properties
+hbase_properties:
+  hbase.rootdir: "hdfs://{{hadoop_namenode}}:{{hadoop_namenode_port}}/hbase/"
+  hbase.cluster.distributed: true
+  hbase.master.info.port: 16010
+  hbase.tmp.dir: "{{hbase_tmp_dir}}"
+  hbase.local.dir: "{{hbase_local_dir}}"
+  hbase.master.info.bindAddress: "{{ansible_default_ipv4.address}}"
+  hbase.rest.port: 18080
+  hbase.rest.readonly: true
+  hbase.regionserver.info.port: -1
+  hbase.regionserver.info.bindAddress: "{{ansible_default_ipv4.address}}"
+  hbase.master: "{{hadoop_namenode}}"
+  hbase.master.port: 16000
+  hbase.zookeeper.property.dataDir: "{{hbase_home}}/zookeeper"
+  hbase.zookeeper.quorum: "{{ groups['hbase_all'] | map('extract', hostvars, ['ansible_fqdn']) | join(',') }}"
+  hbase.security.authentication: false
+  hbase.superuser: hbase.superuser
+
+# Ports that should be opened in iptables
+hbase_ports_to_open:
+  - 2181
+  - 2888
+  - 3888
+  - 60000
+  - 60010
+  - 60020
+  - 60030

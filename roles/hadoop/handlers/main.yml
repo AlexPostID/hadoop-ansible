@@ -1,0 +1,35 @@
+---
+- name: restart hadoop-dfs
+  service: name=hadoop-dfs state=restarted
+  when: hadoop_is_namenode is defined and  hadoop_is_namenode == "true"
+
+- name: restart yarn-resourcemanager
+  service: name=yarn-resourcemanager state=restarted
+  when: hadoop_is_namenode is defined and  hadoop_is_namenode == "true"
+
+- name: restart hadoop-datanode
+  service: name=hadoop-datanode state=restarted
+  when: hadoop_is_datanode is defined and hadoop_is_datanode == "true"
+
+- name: restart yarn-nodemanager
+  service: name=yarn-nodemanager state=restarted
+  when: hadoop_is_datanode is defined and hadoop_is_datanode == "true"
+
+- name: restart hadoop-secondarynamenode
+  service: name=hadoop-secondarynamenode state=restarted
+  when: hadoop_is_secondarynamenode is defined and hadoop_is_secondarynamenode == "true"
+
+# Re-read the hosts and exclude files to update the set of Datanodes that are allowed
+# to connect to the Namenode and those that should be decommissioned or recommissioned.
+- name: refresh dfs-nodes
+  become_user: "{{ hadoop_user }}"
+  command: "{{ hadoop_home }}/bin/hdfs dfsadmin -refreshNodes"
+  when: hadoop_is_namenode is defined and hadoop_is_namenode == "true"
+  ignore_errors: yes
+
+# Refresh the hosts information at the ResourceManager.
+- name: refresh yarn-nodes
+  become_user: "{{ hadoop_user }}"
+  command: "{{ hadoop_home }}/bin/yarn rmadmin -refreshNodes"
+  when: hadoop_is_namenode is defined and hadoop_is_namenode == "true"
+  ignore_errors: yes

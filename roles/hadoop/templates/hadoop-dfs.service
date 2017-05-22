@@ -1,0 +1,16 @@
+[Unit]
+Description=dfs
+
+[Service]
+Type=forking
+User={{hadoop_user}}
+Group={{hadoop_group}}
+Restart=on-failure
+WorkingDirectory={{hadoop_home}}
+ExecStop={{ hadoop_home }}/sbin/hadoop-daemon.sh  --script hdfs stop namenode
+ExecStart={{ hadoop_home }}/sbin/hadoop-daemon.sh --script hdfs start namenode
+PIDFile=/tmp/hadoop-hadoop-namenode.pid
+TimeoutStartSec=2min
+
+[Install]
+WantedBy=multi-user.target

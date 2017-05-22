@@ -1,0 +1,16 @@
+[Unit]
+Description=secondarynamenode
+
+[Service]
+Type=forking
+User={{hadoop_user}}
+Group={{hadoop_group}}
+Restart=on-failure
+WorkingDirectory={{hadoop_home}}
+ExecStop={{ hadoop_home }}/sbin/hadoop-daemon.sh  stop secondarynamenode
+ExecStart={{ hadoop_home }}/sbin/hadoop-daemon.sh start secondarynamenode
+PIDFile=/tmp/hadoop-hadoop-secondarynamenode.pid
+TimeoutStartSec=2min
+
+[Install]
+WantedBy=multi-user.target

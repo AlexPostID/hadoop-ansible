@@ -7,20 +7,23 @@ proxy_env:
 # Default Java home
 JAVA_HOME: "/usr"
 
-# Hadoop user and group
+# Hadoop instalation default values
+hadoop_version: 2.6.1
 hadoop_user: hadoop
 hadoop_group: hadoop
-
-hadoop_ssh_private_key: "~/.ssh/id_rsa"
-hadoop_ssh_authorized_keys: "~/.ssh/authorized_keys"
-
-# Hadoop directories
+hadoop_user_home: "/home/{{hadoop_user}}"
 hadoop_installation_path: "/opt"
 hadoop_home: "{{ hadoop_installation_path }}/hadoop"
 hadoop_log_directory: "{{hadoop_home}}/log"
 
-# Hadoop full varsion
-hadoop_version: 2.6.1
+# Default SSH parameters
+generate_hadoop_ssh_key: true
+hadoop_ssh_private_key: ""
+hadoop_ssh_public_key: ""
+
+# Variables with local paths, used for generated ssh keys location
+local_user_home: "{{ lookup('env','HOME') }}"
+local_ssh_key_dir: "{{ local_user_home }}/.ssh/{{ deployment_id }}"
 
 # Default node role
 hadoop_is_namenode: false
@@ -33,7 +36,6 @@ hadoop_namenode: "{{ hostvars[groups['hadoop_namenode'][0]]['ansible_fqdn'] | ma
 # Secondary namenode definition
 hadoop_secondarynamenode_port: 50091
 hadoop_secondarynamenode: "{{ hostvars[groups['hadoop_secondarynamenode'][0]]['ansible_fqdn'] | default(hadoop_namenode) }}"
-
 
 # Config properties
 core_properties:

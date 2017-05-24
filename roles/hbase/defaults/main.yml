@@ -17,13 +17,21 @@ hbase_tar_name: "hbase-{{hbase_version}}-bin.tar.gz"
 hbase_download_url: "http://www-eu.apache.org/dist/hbase/{{hbase_version}}/{{hbase_tar_name}}"
 hbase_user: hbase
 hbase_group: hbase
+hbase_user_home: "/home/{{hbase_user}}"
 hbase_installation_path: "/opt"
 hbase_home: "{{hbase_installation_path}}/hbase"
 hbase_log_directory: "{{hbase_home}}/log"
 hbase_tmp_dir: "{{hbase_home}}/tmp"
 hbase_local_dir: "{{hbase_home}}/local_storage"
-hbase_ssh_private_key: "~/.ssh/id_rsa"
-hbase_ssh_authorized_keys: "~/.ssh/authorized_keys"
+
+# Default SSH parameters
+generate_hbase_ssh_key: true
+hbase_ssh_private_key: ""
+hbase_ssh_authorized_keys: ""
+
+# Variables with local paths, used for generated ssh keys location
+local_user_home: "{{ lookup('env','HOME') }}"
+local_ssh_key_dir: "{{ local_user_home }}/.ssh/{{ deployment_id }}"
 
 # Hbase properties
 hbase_properties:

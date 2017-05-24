@@ -11,17 +11,38 @@ Hbase version: 1.3.0
 
 ### Deployment Configuration  
 
-`vars/env.yml`  - contains variables that can override default variables for roles
+`vars/env.yml`  - contains variables that can override default variables for roles  
 
-You need to specify private SSH key for hbase and hadoop uses.  
-These keys are used for Hadoop and HBase startup scrips  
+##### SSH keys  
+
+By default SSH keys for hadoop and hbase users will be generated automatically.  
+After deployment you can find them in the directory:  
+```
+{{local_user_home}}/.ssh/{{deployment_id}}
+```  
+
+
+where:  
+`local_user_home` - is the home directory of the user, that executed ansible-playbook command.  
+`deployment_id` - is arbitrary name that used as identifier for hadoop cluster deployment (specified and can be changed in `vars/env.yml`).  
+
+To use your own keys, please set to `false` next parameters:  
 
 ```
-hbase_ssh_private_key: "~/.ssh/hbase_rsa"
-hbase_ssh_authorized_keys: "~/.ssh/authorized_keys_hbase"
-hadoop_ssh_private_key: "~/.ssh/hadoop_rsa"
-hadoop_ssh_authorized_keys: "~/.ssh/authorized_keys_hadoop"
+generate_hbase_ssh_key: false
+generate_hadoop_ssh_key: false
 ```
+
+and specify local path to private and public SSH keys for hbase and hadoop uses.  
+
+```
+hbase_ssh_private_key: "~/.ssh/hbase_id_rsa"
+hbase_ssh_public_key: "~/.ssh/hbase_id_rsa.pub"
+hadoop_ssh_private_key: "~/.ssh/hadoop_id_rsa"
+hadoop_ssh_public_keys: "~/.ssh/hadoop_id_rsa.pub"
+```
+
+##### Proxy settings
 
 Optionally you can specify proxy address that will be used during installation of the packages:  
 
@@ -33,7 +54,7 @@ proxy_env:
 
 ### Ansible inventory file
 
-You can use `inventory.example` file as a template to create your own Ansible inventory file.
+You can use `inventory.example` file as a template to create your own Ansible inventory file.  
 
 ```
 [hadoop_namenode]
@@ -67,7 +88,7 @@ hbase_regionservers
 
 ### Ansible config file  
 
-You can use `ansible.cfg.example` file as a template to create your own Ansible configuration file.
+You can use `ansible.cfg.example` file as a template to create your own Ansible configuration file.  
 
 ```
 [defaults]
@@ -81,12 +102,12 @@ nocows = 1
 
 ### Deployment
 
-To deploy Hadoop and HBase run:
+To deploy Hadoop and HBase run:  
 
 ```
 ansible-playbook site.yml
 ```
-Also you can run deployment for Hadoop and HBase separately:
+Also you can run deployment for Hadoop and HBase separately:  
 
 ```
 ansible-playbook deploy-hadoop.yml
